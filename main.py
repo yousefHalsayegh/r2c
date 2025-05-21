@@ -1,5 +1,6 @@
 import json
- 
+import re 
+
 def opcode(op):
     if op == "0110111" or op == "0010111":
         return 'U'
@@ -29,58 +30,55 @@ def binary2decimal(bits):
 with open('actions.json', 'r') as file:
     actions = json.load(file)
 while True:
-    message = input("Please enter the machine code in a 32-bit format (Binary or Hexadeciaml): ").replace(" ", "")
-    if len(message) == 32:
-        break
+    message = input("Please enter the machine code in a 32-bit format (write done to exist): ").replace(" ", "")
+    if len(message) == 32 and re.fullmatch("[01]+",message):
+        op = opcode(message[-7:])
+        func3 = binary2decimal(message[-15:-12])
+        rs1 = binary2decimal(message[-20:-15])
+        rs2 = binary2decimal(message[-24:-20])
+        func7 = binary2decimal(message[:-25])
+        imm = binary2decimal(message[:-20])
+
+        rd = binary2decimal(message[-12:-7])
+
+        if op == "U":
+            imm = binary2decimal(message[:-12])
+        elif op == "S":
+            imm = binary2decimal(message[:-25]+message[-12:-7])
+        elif op == "B":
+            imm = binary2decimal(message[0]+message[-8]+message[1:-25]+message[-12:-8]+"0")
+        elif op == "J":
+            imm = binary2decimal(message[0]+message[-20:-12]+message[-21]+message[1:-21]+"0")
+
+        if op == "R":
+            print(f'{actions[op][str(func3)[0]][str(func7)[0]]} x{rd}, x{rs1}, x{rs2}')
+
+        elif op == "J":
+            print(f'{actions[op]} x{rd}, {imm}')
+
+        elif op == "U":
+            print(f'{actions[op][str(binary2decimal(message[-7:]))]} x{rd}, {imm}')
+
+        elif op == "S":
+            print(f'{actions[op][str(func3)[0]]} x{rs2}, {imm}(x{rs1})')
+
+        elif op == "B":
+            print(f'{actions[op][str(func3)[0]]} x{rs1}, x{rs2}, {imm}')
+
+        elif binary2decimal(message[-7:]) == 103:
+            print(f'{actions[op][str(binary2decimal(message[-7:]))]} x{rd}, {imm}(x{rs1})')
+
+        elif binary2decimal(message[-7:]) == 19 and func3 == 5:
+            print(f'{actions[op][str(binary2decimal(message[-7:]))][str(func3)[0] + "." + message[1]]} x{rd}, x{rs1}, {rs2}')
+
+        elif binary2decimal(message[-7:]) == 115:
+            print(f'{actions[op][str(binary2decimal(message[-7:]))][str(imm)]}')
+
+        else:
+            print(f'{actions[op][str(binary2decimal(message[-7:]))][str(func3)[0]]} x{rd}, x{rs1}, {imm}')
+    elif message.lower() == "done":
+        print("See you again later")
+        quit()
     else:
         print("There was an error in the input, please try again")
 
-op = opcode(message[-7:])
-rd = -1
-rs1 = -1 
-rs2 = -1
-func3 = -1
-func7 = -1
-imm = -1
-
-rd = binary2decimal(message[-12:-7])
-
-if op == "U" or op == "J":
-    imm = binary2decimal(message[:-12])
-else:
-    func3 = binary2decimal(message[-15:-12])
-    rs1 = binary2decimal(message[-20:-15])
-    rs2 = binary2decimal(message[-24:-20])
-    func7 = binary2decimal(message[:-25])
-    imm = binary2decimal(message[:-20])
-
-
-print(
-    f'func 3 {func3}, func 7 {func7}, rd {rd}, rs1 {rs1}, rs2 {rs2}, op {binary2decimal(message[-7:])}, imm {imm}'
-)
-if op == "R":
-    print(f'{actions[op][str(func3)[0]][str(func7)[0]]} x{rd}, x{rs1}, x{rs2}')
-
-elif op == "J":
-     print(f'{actions[op]} x{rd}, {imm}')
-
-elif op == "U":
-    print(f'{actions[op][str(binary2decimal(message[-7:]))]} x{rd}, {imm}')
-
-elif op == "S":
-    print(f'{actions[op][str(func3)[0]]} x{rs2}, {rd+imm}(x{rs1})')
-
-elif op == "B":
-    print(f'{actions[op][str(func3)[0]]} x{rs1}, x{rs2}, {rd+imm}')
-
-elif binary2decimal(message[-7:]) == 103:
-    print(f'{actions[op][str(binary2decimal(message[-7:]))]} x{rd}, {imm}(x{rs1})')
-
-elif binary2decimal(message[-7:]) == 19 and func3 == 5:
-    print(f'{actions[op][str(binary2decimal(message[-7:]))][str(func3)[0] + "." + message[1]]} x{rd}, x{rs1}, {rs2}')
-
-elif binary2decimal(message[-7:]) == 115:
-    print(f'{actions[op][str(binary2decimal(message[-7:]))][str(imm)]}')
-
-else:
-    print(f'{actions[op][str(binary2decimal(message[-7:]))][str(func3)[0]]} x{rd}, x{rs1}, {imm}')
