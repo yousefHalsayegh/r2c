@@ -17,16 +17,17 @@ def opcode(op):
     else:
         print("The entered Opcode is wrong re-enter the code")
     
-def binary2decimal(bits):
+def binary2decimal(bits, f = False):
     sum = 0
     count = 0
     
-    for b in reversed(bits):
+    for b in reversed(bits[1:]):
         sum += int(b) * (2 ** count)
         count += 1
 
-    return sum 
-
+    if bits[0] == "1" and f == True:
+        sum = sum - 2048
+    return sum
 with open('actions.json', 'r') as file:
     actions = json.load(file)
 while True:
@@ -37,18 +38,18 @@ while True:
         rs1 = binary2decimal(message[-20:-15])
         rs2 = binary2decimal(message[-24:-20])
         func7 = binary2decimal(message[:-25])
-        imm = binary2decimal(message[:-20])
+        imm = binary2decimal(message[:-20], True)
 
         rd = binary2decimal(message[-12:-7])
 
         if op == "U":
-            imm = binary2decimal(message[:-12])
+            imm = binary2decimal(message[:-12],True)
         elif op == "S":
-            imm = binary2decimal(message[:-25]+message[-12:-7])
+            imm = binary2decimal(message[:-25]+message[-12:-7],True)
         elif op == "B":
-            imm = binary2decimal(message[0]+message[-8]+message[1:-25]+message[-12:-8]+"0")
+            imm = binary2decimal(message[0]+message[-8]+message[1:-25]+message[-12:-8]+"0", True)
         elif op == "J":
-            imm = binary2decimal(message[0]+message[-20:-12]+message[-21]+message[1:-21]+"0")
+            imm = binary2decimal(message[0]+message[-20:-12]+message[-21]+message[1:-21]+"0", True)
 
         if op == "R":
             print(f'{actions[op][str(func3)[0]][str(func7)[0]]} x{rd}, x{rs1}, x{rs2}')
